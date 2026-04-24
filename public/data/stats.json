@@ -1,0 +1,28 @@
+{
+  "total": 1294,
+  "by_assessment": {
+    "PSAT10": 1222,
+    "SAT": 1294,
+    "PSAT89": 1075
+  },
+  "by_type": {
+    "mcq": 943,
+    "spr": 351
+  },
+  "by_domain": {
+    "Advanced Math": 372,
+    "Algebra": 449,
+    "Geometry and Trigonometry": 227,
+    "Problem-Solving and Data Analysis": 246
+  },
+  "by_difficulty": {
+    "E": 169,
+    "H": 730,
+    "M": 395
+  },
+  "by_assessment_combo": {
+    "PSAT10,SAT": 147,
+    "SAT": 72,
+    "PSAT10,PSAT89,SAT": 1075
+  }
+}

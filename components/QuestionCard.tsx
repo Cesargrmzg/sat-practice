@@ -2,6 +2,7 @@
 
 import { Question } from '@/lib/types'
 import { getDifficultyLabel, getDifficultyColor, getDomainShort } from '@/lib/questions'
+import { useI18n } from '@/lib/i18n'
 
 interface QuestionCardProps {
   question: Question
@@ -30,6 +31,7 @@ export default function QuestionCard({
   isSkipped,
   onSkip,
 }: QuestionCardProps) {
+  const { lang, t } = useI18n()
   const isMCQ = question.type === 'mcq'
   const isSPR = question.type === 'spr'
   const correctIds = question.correct_answer || []
@@ -38,7 +40,6 @@ export default function QuestionCard({
     ? correctIds.includes(selectedAnswer)
     : null
 
-  // For SPR, parse the correct answer text
   const sprCorrectAnswer = isSPR && question.answer_options
     ? question.answer_options[0]?.content?.replace(/<[^>]*>/g, '')?.trim()
     : null
@@ -66,7 +67,7 @@ export default function QuestionCard({
           )}
         </div>
         <span className="text-xs text-gray-400 uppercase font-mono">
-          {isMCQ ? 'Opción múltiple' : 'Respuesta corta'}
+          {isMCQ ? t.multipleChoice() : t.shortAnswer()}
         </span>
       </div>
 
@@ -124,23 +125,29 @@ export default function QuestionCard({
         <div className="mb-6">
           {!showFeedback ? (
             <div>
-              <label className="block text-sm text-gray-500 mb-2">Tu respuesta:</label>
+              <label className="block text-sm text-gray-500 mb-2">
+                {lang === 'es' ? 'Tu respuesta:' : 'Your answer:'}
+              </label>
               <input
                 type="text"
                 value={selectedAnswer || ''}
                 onChange={e => onSelectAnswer(e.target.value)}
-                placeholder="Escribe tu respuesta..."
+                placeholder={lang === 'es' ? 'Escribe tu respuesta...' : 'Type your answer...'}
                 className="input text-lg py-3"
                 onKeyDown={e => { if (e.key === 'Enter') onCheck() }}
               />
             </div>
           ) : (
             <div className="p-4 rounded-lg bg-gray-50">
-              <div className="text-sm text-gray-500 mb-1">Tu respuesta:</div>
-              <div className={`text-lg font-medium ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
-                {selectedAnswer || '(sin respuesta)'}
+              <div className="text-sm text-gray-500 mb-1">
+                {lang === 'es' ? 'Tu respuesta:' : 'Your answer:'}
               </div>
-              <div className="text-sm text-gray-500 mt-2">Respuesta correcta:</div>
+              <div className={`text-lg font-medium ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                {selectedAnswer || (lang === 'es' ? '(sin respuesta)' : '(no answer)')}
+              </div>
+              <div className="text-sm text-gray-500 mt-2">
+                {lang === 'es' ? 'Respuesta correcta:' : 'Correct answer:'}
+              </div>
               <div className="text-lg font-medium text-green-600">{sprCorrectAnswer}</div>
             </div>
           )}
@@ -153,7 +160,9 @@ export default function QuestionCard({
           isCorrect ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
         }`}>
           <div className={`font-medium mb-2 ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
-            {isCorrect ? '✓ Correcto' : '✗ Incorrecto'}
+            {isCorrect
+              ? (lang === 'es' ? '✓ Correcto' : '✓ Correct')
+              : (lang === 'es' ? '✗ Incorrecto' : '✗ Incorrect')}
           </div>
           {question.rationale && (
             <div
@@ -173,17 +182,21 @@ export default function QuestionCard({
               disabled={!selectedAnswer}
               className="btn-primary"
             >
-              Verificar
+              {t.verify()}
             </button>
             {mode === 'free' && onSkip && (
               <button onClick={onSkip} className="btn-secondary">
-                Saltar
+                {t.skip()}
               </button>
             )}
           </div>
         ) : (
           <button onClick={onNext} className="btn-primary">
-            {mode === 'simulation' ? (questionNumber === totalQuestions ? 'Ver resultados' : 'Siguiente') : 'Siguiente pregunta'}
+            {mode === 'simulation'
+              ? (questionNumber === totalQuestions
+                  ? (lang === 'es' ? 'Ver resultados' : 'View results')
+                  : t.nextQuestion())
+              : t.nextQuestion()}
           </button>
         )}
       </div>

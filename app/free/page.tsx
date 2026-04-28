@@ -6,8 +6,10 @@ import { useSearchParams } from 'next/navigation'
 import { loadQuestions, filterQuestions, getRandomQuestion } from '@/lib/questions'
 import { Question, Difficulty } from '@/lib/types'
 import QuestionCard from '@/components/QuestionCard'
+import { useI18n } from '@/lib/i18n'
 
 function FreeContent() {
+  const { lang, t } = useI18n()
   const searchParams = useSearchParams()
   const assessment = searchParams.get('assessment') || 'SAT'
   const difficulty = (searchParams.get('difficulty') || 'mixed') as Difficulty
@@ -62,7 +64,7 @@ function FreeContent() {
   if (!loaded) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-gray-400">Cargando preguntas...</div>
+        <div className="text-gray-400">{t.loading()}</div>
       </div>
     )
   }
@@ -71,13 +73,11 @@ function FreeContent() {
     return (
       <div className="text-center py-20">
         <h2 className="text-2xl font-semibold mb-4" style={{ letterSpacing: '-1px' }}>
-          No hay preguntas disponibles
+          {t.noQuestions()}
         </h2>
-        <p className="text-gray-500 mb-6">
-          No se encontraron preguntas con los filtros seleccionados.
-        </p>
+        <p className="text-gray-500 mb-6">{t.noQuestionsDesc()}</p>
         <a href="/" className="btn-primary inline-block">
-          Volver al inicio
+          {t.back()}
         </a>
       </div>
     )
@@ -89,22 +89,22 @@ function FreeContent() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <a href="/" className="text-sm text-gray-400 hover:text-black transition-colors">
-            ← Volver
+            ← {t.back()}
           </a>
           <h1 className="text-lg font-semibold" style={{ letterSpacing: '-0.5px' }}>
-            Modo Libre
+            {t.freeModeTitle()}
           </h1>
         </div>
         <div className="flex items-center gap-4 text-sm">
           <span className="text-gray-500">
-            Respondidas: <span className="font-semibold text-black">{questionCount}</span>
+            {t.answered()}: <span className="font-semibold text-black">{questionCount}</span>
           </span>
           <span className="text-gray-500">
-            Correctas: <span className="font-semibold text-green-600">{correctCount}</span>
+            {t.correct()}: <span className="font-semibold text-green-600">{correctCount}</span>
           </span>
           {questionCount > 0 && (
             <span className="text-gray-500">
-              Acierto: <span className="font-semibold text-black">
+              {t.accuracy()}: <span className="font-semibold text-black">
                 {Math.round((correctCount / questionCount) * 100)}%
               </span>
             </span>
@@ -131,10 +131,11 @@ function FreeContent() {
 }
 
 export default function FreePage() {
+  const { t } = useI18n()
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-gray-400">Cargando...</div>
+        <div className="text-gray-400">{t.loading()}</div>
       </div>
     }>
       <FreeContent />

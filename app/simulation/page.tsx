@@ -1,18 +1,34 @@
 'use client'
 
 import { Suspense } from 'react'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { loadQuestions, filterQuestions, selectWeightedQuestions, getDifficultyLabel, getDifficultyColor } from '@/lib/questions'
 import { saveSimulationResult, generateId } from '@/lib/storage'
 import { Question, Difficulty, SimulationQuestion, SimulationResult } from '@/lib/types'
 import QuestionCard from '@/components/QuestionCard'
+import { useI18n } from '@/lib/i18n'
 
 type SimState = 'setup' | 'playing' | 'results'
 
 const TOTAL_QUESTIONS = 30
+const SESSION_KEY = 'sat-sim-session'
+
+interface SimSession {
+  playerName: string
+  assessment: string
+  difficulty: string
+  domain: string
+  questions: Question[]
+  currentIndex: number
+  answers: SimulationQuestion[]
+  startTime: number
+  selectedAnswer: string | null
+  showFeedback: boolean
+}
 
 function SimulationContent() {
+  const { lang, t } = useI18n()
   const searchParams = useSearchParams()
   const assessment = searchParams.get('assessment') || 'SAT'
   const difficulty = (searchParams.get('difficulty') || 'mixed') as Difficulty
@@ -29,7 +45,25 @@ function SimulationContent() {
   const [startTime, setStartTime] = useState(0)
   const [loaded, setLoaded] = useState(false)
   const [timeElapsed, setTimeElapsed] = useState(0)
+  const [hasSavedSession, setHasSavedSession] = useState(false)
+  const restoreChecked = useRef(false)
 
+  // Check for saved session on mount
+  useEffect(() => {
+    if (restoreChecked.current) return
+    restoreChecked.current = true
+    try {
+      const saved = localStorage.getItem(SESSION_KEY)
+      if (saved) {
+        const session: SimSession = JSON.parse(saved)
+        if (session.assessment === assessment && session.difficulty === difficulty && session.domain === domain) {
+          setHasSavedSession(true)
+        }
+      }
+    } catch {}
+  }, [assessment, difficulty, domain])
+
+  // Timer
   useEffect(() => {
     if (state !== 'playing') return
     const interval = setInterval(() => {
@@ -44,6 +78,7 @@ function SimulationContent() {
     return `${m}:${sec.toString().padStart(2, '0')}`
   }
 
+  // Load question pool
   useEffect(() => {
     loadQuestions().then(all => {
       const filtered = filterQuestions(all, assessment, difficulty, domain)
@@ -51,6 +86,43 @@ function SimulationContent() {
       setLoaded(true)
     })
   }, [assessment, difficulty, domain])
+
+  // Save session whenever state changes during play
+  useEffect(() => {
+    if (state !== 'playing' || questions.length === 0) return
+    const session: SimSession = {
+      playerName, assessment, difficulty, domain,
+      questions, currentIndex, answers, startTime,
+      selectedAnswer, showFeedback,
+    }
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session))
+  }, [state, playerName, assessment, difficulty, domain, questions, currentIndex, answers, startTime, selectedAnswer, showFeedback])
+
+  const restoreSession = () => {
+    try {
+      const saved = localStorage.getItem(SESSION_KEY)
+      if (!saved) return
+      const session: SimSession = JSON.parse(saved)
+      setPlayerName(session.playerName)
+      setQuestions(session.questions)
+      setCurrentIndex(session.currentIndex)
+      setAnswers(session.answers)
+      setStartTime(session.startTime)
+      setSelectedAnswer(session.selectedAnswer)
+      setShowFeedback(session.showFeedback)
+      setState('playing')
+      setHasSavedSession(false)
+    } catch {}
+  }
+
+  const discardSession = () => {
+    localStorage.removeItem(SESSION_KEY)
+    setHasSavedSession(false)
+  }
+
+  const clearSession = () => {
+    localStorage.removeItem(SESSION_KEY)
+  }
 
   const startSimulation = () => {
     if (!playerName.trim() || pool.length < TOTAL_QUESTIONS) return
@@ -141,14 +213,15 @@ function SimulationContent() {
     }
 
     saveSimulationResult(result)
+    clearSession()
     setState('results')
   }
 
   const getGrade = (pct: number) => {
-    if (pct >= 90) return { label: 'Excelente', color: 'text-green-600' }
-    if (pct >= 70) return { label: 'Bien', color: 'text-blue-600' }
-    if (pct >= 50) return { label: 'Regular', color: 'text-orange-500' }
-    return { label: 'Necesitas mejorar', color: 'text-red-600' }
+    if (pct >= 90) return { label: lang === 'es' ? 'Excelente' : 'Excellent', color: 'text-green-600' }
+    if (pct >= 70) return { label: lang === 'es' ? 'Bien' : 'Good', color: 'text-blue-600' }
+    if (pct >= 50) return { label: lang === 'es' ? 'Regular' : 'Regular', color: 'text-orange-500' }
+    return { label: lang === 'es' ? 'Necesitas mejorar' : 'Needs improvement', color: 'text-red-600' }
   }
 
   // SETUP STATE
@@ -156,7 +229,7 @@ function SimulationContent() {
     if (!loaded) {
       return (
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-gray-400">Cargando...</div>
+          <div className="text-gray-400">{t.loading()}</div>
         </div>
       )
     }
@@ -164,23 +237,45 @@ function SimulationContent() {
     return (
       <div className="max-w-lg mx-auto py-12">
         <a href="/" className="text-sm text-gray-400 hover:text-black transition-colors mb-6 block">
-          ← Volver
+          ← {t.back()}
         </a>
         <h1 className="text-3xl font-semibold mb-2" style={{ letterSpacing: '-1.5px' }}>
-          Modo Simulación
+          {t.simTitle()}
         </h1>
         <p className="text-gray-500 mb-8">
-          Responde {TOTAL_QUESTIONS} preguntas cronometradas. Los resultados se guardarán con tu nombre.
+          {t.simSubtitle({ count: TOTAL_QUESTIONS })}
         </p>
+
+        {/* Restore session prompt */}
+        {hasSavedSession && (
+          <div className="card p-6 mb-4 border-2 border-amber-300 bg-amber-50">
+            <h3 className="font-semibold text-amber-800 mb-2">
+              {lang === 'es' ? 'Sesión encontrada' : 'Session found'}
+            </h3>
+            <p className="text-sm text-amber-700 mb-4">
+              {lang === 'es'
+                ? 'Tienes una simulación sin terminar. ¿Quieres continuar donde te quedaste?'
+                : 'You have an unfinished simulation. Do you want to continue where you left off?'}
+            </p>
+            <div className="flex gap-3">
+              <button onClick={restoreSession} className="btn-primary">
+                {lang === 'es' ? 'Continuar' : 'Continue'}
+              </button>
+              <button onClick={discardSession} className="btn-secondary">
+                {lang === 'es' ? 'Empezar de nuevo' : 'Start over'}
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="card p-6">
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-600 mb-2">Tu nombre</label>
+            <label className="block text-sm font-medium text-gray-600 mb-2">{t.yourName()}</label>
             <input
               type="text"
               value={playerName}
               onChange={e => setPlayerName(e.target.value)}
-              placeholder="Ingresa tu nombre..."
+              placeholder={t.namePlaceholder()}
               className="input text-lg py-3"
               onKeyDown={e => { if (e.key === 'Enter') startSimulation() }}
               autoFocus
@@ -188,10 +283,10 @@ function SimulationContent() {
           </div>
 
           <div className="text-sm text-gray-500 mb-4">
-            <span className="font-semibold text-black">{pool.length}</span> preguntas disponibles
+            <span className="font-semibold text-black">{pool.length}</span> {t.questionsAvail()}
             {pool.length < TOTAL_QUESTIONS && (
               <span className="text-red-500 ml-2">
-                (necesitas al menos {TOTAL_QUESTIONS})
+                {t.needMin({ count: TOTAL_QUESTIONS })}
               </span>
             )}
           </div>
@@ -201,7 +296,7 @@ function SimulationContent() {
             disabled={!playerName.trim() || pool.length < TOTAL_QUESTIONS}
             className="btn-primary w-full py-3 text-base"
           >
-            Iniciar Simulación
+            {t.startSim()}
           </button>
         </div>
       </div>
@@ -216,10 +311,10 @@ function SimulationContent() {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
             <a href="/" className="text-sm text-gray-400 hover:text-black transition-colors">
-              ← Cancelar
+              ← {t.cancel()}
             </a>
             <span className="text-sm text-gray-500 flex items-center gap-2">
-              {playerName} — Pregunta {currentIndex + 1} de {TOTAL_QUESTIONS}
+              {t.questionOf({ name: playerName, current: currentIndex + 1, total: TOTAL_QUESTIONS })}
               <span className="font-mono text-amber-600 bg-amber-50 px-2 py-0.5 rounded">
                 {formatTime(timeElapsed)}
               </span>
@@ -279,9 +374,9 @@ function SimulationContent() {
     return (
       <div className="max-w-2xl mx-auto py-8">
         <h1 className="text-3xl font-semibold mb-2" style={{ letterSpacing: '-1.5px' }}>
-          Resultados
+          {t.results()}
         </h1>
-        <p className="text-gray-500 mb-8">{playerName} — Simulación completada</p>
+        <p className="text-gray-500 mb-8">{t.simCompleted({ name: playerName })}</p>
 
         {/* Score card */}
         <div className="card p-8 text-center mb-6">
@@ -294,30 +389,30 @@ function SimulationContent() {
           <div className="flex justify-center gap-8 text-sm">
             <div>
               <div className="text-2xl font-semibold text-green-600">{correct}</div>
-              <div className="text-gray-400">Correctas</div>
+              <div className="text-gray-400">{t.correctLabel()}</div>
             </div>
             <div>
               <div className="text-2xl font-semibold text-red-500">{incorrect}</div>
-              <div className="text-gray-400">Incorrectas</div>
+              <div className="text-gray-400">{t.incorrect()}</div>
             </div>
             <div>
               <div className="text-2xl font-semibold text-gray-400">{skipped}</div>
-              <div className="text-gray-400">Saltadas</div>
+              <div className="text-gray-400">{t.skipped()}</div>
             </div>
             <div>
               <div className="text-2xl font-semibold text-gray-600">{minutes}:{seconds.toString().padStart(2, '0')}</div>
-              <div className="text-gray-400">Tiempo</div>
+              <div className="text-gray-400">{t.time()}</div>
             </div>
           </div>
         </div>
 
         {/* By domain */}
         <div className="card p-6 mb-4">
-          <h3 className="font-semibold mb-4">Por dominio</h3>
+          <h3 className="font-semibold mb-4">{t.byDomain()}</h3>
           <div className="space-y-3">
-            {Object.entries(byDomain).map(([domain, stats]) => (
-              <div key={domain} className="flex items-center justify-between">
-                <span className="text-sm">{domain}</span>
+            {Object.entries(byDomain).map(([d, stats]) => (
+              <div key={d} className="flex items-center justify-between">
+                <span className="text-sm">{d}</span>
                 <div className="flex items-center gap-3">
                   <div className="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div
@@ -336,7 +431,7 @@ function SimulationContent() {
 
         {/* By difficulty */}
         <div className="card p-6 mb-6">
-          <h3 className="font-semibold mb-4">Por dificultad</h3>
+          <h3 className="font-semibold mb-4">{t.byDifficulty()}</h3>
           <div className="space-y-3">
             {Object.entries(byDiff).map(([diff, stats]) => (
               <div key={diff} className="flex items-center justify-between">
@@ -362,13 +457,13 @@ function SimulationContent() {
         {/* Actions */}
         <div className="flex gap-3">
           <a href="/simulation" className="btn-primary">
-            Nueva simulación
+            {t.newSim()}
           </a>
           <a href="/history" className="btn-secondary">
-            Ver historial
+            {t.viewHistory()}
           </a>
           <a href="/" className="btn-secondary">
-            Inicio
+            {t.home()}
           </a>
         </div>
       </div>
@@ -379,10 +474,11 @@ function SimulationContent() {
 }
 
 export default function SimulationPage() {
+  const { t } = useI18n()
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-gray-400">Cargando...</div>
+        <div className="text-gray-400">{t.loading()}</div>
       </div>
     }>
       <SimulationContent />

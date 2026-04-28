@@ -1,9 +1,11 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { I18nProvider } from '@/lib/i18n'
+import Navbar from '@/components/Navbar'
 
 export const metadata: Metadata = {
-  title: 'SAT Practice — Banco de Preguntas',
-  description: 'Practica preguntas de matemáticas SAT, PSAT/NMSQT y PSAT 8/9 con retroalimentación inmediata',
+  title: 'SAT Practice — Question Bank',
+  description: 'SAT, PSAT/NMSQT and PSAT 8/9 math practice platform',
 }
 
 export default function RootLayout({
@@ -13,36 +15,18 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body>
-        <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
-          <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-            <a href="/" className="flex items-center gap-2">
-              <span className="font-semibold text-lg tracking-tight" style={{ letterSpacing: '-0.5px' }}>
-                SAT Practice
-              </span>
-            </a>
-            <div className="flex items-center gap-6">
-              <a href="/free" className="text-sm text-gray-600 hover:text-black transition-colors">
-                Modo Libre
-              </a>
-              <a href="/simulation" className="text-sm text-gray-600 hover:text-black transition-colors">
-                Simulación
-              </a>
-              <a href="/history" className="text-sm text-gray-600 hover:text-black transition-colors">
-                Historial
-              </a>
-            </div>
+      <body className="font-sans antialiased">
+        <I18nProvider>
+          <div className="min-h-screen flex flex-col">
+            <Navbar />
+            <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-8">
+              {children}
+            </main>
+            <footer className="text-center py-6 text-xs text-gray-400 border-t border-gray-100">
+              College Board® SAT Practice — All questions sourced from official College Board materials.
+            </footer>
           </div>
-        </nav>
-        <main className="max-w-5xl mx-auto px-4 py-8">
-          {children}
-        </main>
+        </I18nProvider>
       </body>
     </html>
   )

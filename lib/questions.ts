@@ -2,28 +2,12 @@ import { Question, Difficulty, DIFFICULTY_WEIGHTS } from './types'
 
 let cachedQuestions: Question[] | null = null
 
-function normalizeMathText(text: string): string {
-  return text
-    .replace(/\(\s*negative\s+(\d+(?:\.\d+)?)\s+comma\s+([^\)]+?)\s*\)/gi, '(-$1, $2)')
-    .replace(/\(\s*(\d+(?:\.\d+)?)\s+comma\s+([^\)]+?)\s*\)/gi, '($1, $2)')
-    .replace(/\bnegative\s+(\d+(?:\.\d+)?)\s+comma\s+([\d.]+)\b/gi, '(-$1, $2)')
-}
-
-function normalizeHtmlContent(html: string): string {
-  return normalizeMathText(html)
-}
-
 function normalizeQuestion(question: Question): Question {
-  const normalizeOption = (opt: { id: string; content: string }) => ({
-    ...opt,
-    content: normalizeHtmlContent(opt.content),
-  })
-
   return {
     ...question,
-    stem: normalizeHtmlContent(question.stem),
-    rationale: normalizeHtmlContent(question.rationale),
-    answer_options: question.answer_options?.map(normalizeOption) ?? null,
+    stem: question.stem,
+    rationale: question.rationale,
+    answer_options: question.answer_options,
   }
 }
 

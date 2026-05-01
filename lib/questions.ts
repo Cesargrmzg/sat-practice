@@ -3,11 +3,19 @@ import { Question, Difficulty, DIFFICULTY_WEIGHTS } from './types'
 let cachedQuestions: Question[] | null = null
 
 function normalizeQuestion(question: Question): Question {
+  const normalizeMathMarkup = (html: string) =>
+    html
+      .replace(/<mfenced\b[^>]*>/g, '<mrow><mo>(</mo>')
+      .replace(/<\/mfenced>/g, '<mo>)</mo></mrow>')
+
   return {
     ...question,
-    stem: question.stem,
-    rationale: question.rationale,
-    answer_options: question.answer_options,
+    stem: normalizeMathMarkup(question.stem),
+    rationale: normalizeMathMarkup(question.rationale),
+    answer_options: question.answer_options?.map(opt => ({
+      ...opt,
+      content: normalizeMathMarkup(opt.content),
+    })) ?? null,
   }
 }
 

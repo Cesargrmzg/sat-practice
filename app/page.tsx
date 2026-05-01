@@ -175,6 +175,7 @@ export default function HomePage() {
           ⚠ {t.langDisclaimer()}
         </div>
       )}
+
     </div>
   )
 }

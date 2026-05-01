@@ -35,6 +35,20 @@ html, body {
 /* MathML styling */
 math {
   font-size: 1.1em;
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+.question-stem math,
+.rationale math,
+.answer-option math {
+  font-size: 1.08em;
+}
+
+math[display='block'] {
+  display: block;
+  margin: 0.75rem auto;
 }
 
 /* SVG images in questions */

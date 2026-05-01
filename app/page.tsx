@@ -35,7 +35,7 @@ export default function HomePage() {
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    loadQuestions().then(qs => {
+    loadQuestions(lang).then(qs => {
       let filtered = qs
       if (assessment !== 'all') {
         filtered = filtered.filter(q => q.assessments.includes(assessment))
@@ -49,7 +49,7 @@ export default function HomePage() {
       setQuestionCount(filtered.length)
       setLoaded(true)
     })
-  }, [assessment, difficulty, domain])
+  }, [assessment, difficulty, domain, lang])
 
   const freeUrl = `/free?assessment=${assessment}&difficulty=${difficulty}&domain=${domain}`
   const simUrl = `/simulation?assessment=${assessment}&difficulty=${difficulty}&domain=${domain}`

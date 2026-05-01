@@ -80,12 +80,12 @@ function SimulationContent() {
 
   // Load question pool
   useEffect(() => {
-    loadQuestions().then(all => {
+    loadQuestions(lang).then(all => {
       const filtered = filterQuestions(all, assessment, difficulty, domain)
       setPool(filtered)
       setLoaded(true)
     })
-  }, [assessment, difficulty, domain])
+  }, [assessment, difficulty, domain, lang])
 
   // Save session whenever state changes during play
   useEffect(() => {

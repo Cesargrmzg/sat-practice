@@ -24,7 +24,7 @@ function FreeContent() {
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    loadQuestions().then(all => {
+    loadQuestions(lang).then(all => {
       const filtered = filterQuestions(all, assessment, difficulty, domain)
       setPool(filtered)
       if (filtered.length > 0) {
@@ -32,7 +32,7 @@ function FreeContent() {
       }
       setLoaded(true)
     })
-  }, [assessment, difficulty, domain])
+  }, [assessment, difficulty, domain, lang])
 
   const nextQuestion = useCallback(() => {
     if (pool.length === 0) return

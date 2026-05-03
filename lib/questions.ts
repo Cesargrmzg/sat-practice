@@ -1,13 +1,26 @@
 import { Question, Difficulty, DIFFICULTY_WEIGHTS } from './types'
 
-type Lang = 'en' | 'es'
+export type Lang = 'en' | 'es'
 
-const QUESTION_FILES: Record<Lang, string> = {
-  en: '/data/questions.json',
-  es: '/data/questions.es.json',
-}
+const ENGLISH_QUESTION_FILE = '/data/questions.json'
+const SPANISH_QUESTION_FILE = '/data/questions.es.json'
+const SPANISH_QUESTION_BANK_ENABLED = false
+const BROKEN_TRANSLATION_PATTERN = /\[\[\[[A-Z0-9_.-]+\]\]\]/i
 
 const cachedQuestions: Partial<Record<Lang, Question[]>> = {}
+
+function containsBrokenTranslationMarkup(fragment?: string | null): boolean {
+  if (!fragment) return false
+  return BROKEN_TRANSLATION_PATTERN.test(fragment) || fragment.includes('class="notranslate"')
+}
+
+function isQuestionBankSafe(questions: Question[]): boolean {
+  return questions.every(question => {
+    if (containsBrokenTranslationMarkup(question.stem)) return false
+    if (containsBrokenTranslationMarkup(question.rationale)) return false
+    return !(question.answer_options ?? []).some(option => containsBrokenTranslationMarkup(option.content))
+  })
+}
 
 function normalizeMathMarkup(html: string): string {
   if (typeof document === 'undefined') return html
@@ -70,7 +83,7 @@ function mergeQuestion(base: Question, overlay: Partial<Question>): Question {
 }
 
 async function fetchQuestions(lang: Lang): Promise<Question[]> {
-  const file = QUESTION_FILES[lang]
+  const file = lang === 'es' ? SPANISH_QUESTION_FILE : ENGLISH_QUESTION_FILE
   const res = await fetch(file)
   if (!res.ok) throw new Error(`Failed to load ${file}`)
   return await res.json()
@@ -79,18 +92,22 @@ async function fetchQuestions(lang: Lang): Promise<Question[]> {
 export async function loadQuestions(lang: Lang = 'en'): Promise<Question[]> {
   if (cachedQuestions[lang]) return cachedQuestions[lang]!
 
+  const english = cachedQuestions.en ?? (await fetchQuestions('en')).map(normalizeQuestion)
+  cachedQuestions.en = english
+
+  if (lang !== 'es' || !SPANISH_QUESTION_BANK_ENABLED) {
+    cachedQuestions[lang] = english
+    return english
+  }
+
   try {
-    const english = cachedQuestions.en ?? (await fetchQuestions('en')).map(normalizeQuestion)
-    cachedQuestions.en = english
-
-    if (lang === 'en') {
-      return english
-    }
-
     const spanishRaw = await fetchQuestions('es')
     const spanish = spanishRaw.map(normalizeQuestion)
-    const spanishById = new Map(spanish.map(q => [q.external_id, q]))
+    if (!isQuestionBankSafe(spanish)) {
+      throw new Error('Spanish question bank failed validation')
+    }
 
+    const spanishById = new Map(spanish.map(q => [q.external_id, q]))
     const merged = english.map(base => {
       const overlay = spanishById.get(base.external_id)
       return overlay ? mergeQuestion(base, overlay) : base
@@ -98,13 +115,9 @@ export async function loadQuestions(lang: Lang = 'en'): Promise<Question[]> {
 
     cachedQuestions.es = merged
     return merged
-  } catch (error) {
-    if (lang === 'es') {
-      const fallback = cachedQuestions.en ?? (await loadQuestions('en'))
-      cachedQuestions.es = fallback
-      return fallback
-    }
-    throw error
+  } catch {
+    cachedQuestions.es = english
+    return english
   }
 }
 
@@ -185,9 +198,46 @@ export function getRandomQuestion(questions: Question[]): Question {
   return questions[Math.floor(Math.random() * questions.length)]
 }
 
-export function getDifficultyLabel(d: string): string {
-  const map: Record<string, string> = { E: 'Fácil', M: 'Media', H: 'Difícil' }
-  return map[d] || d
+export function getDifficultyLabel(d: string, lang: Lang = 'es'): string {
+  const map: Record<Lang, Record<string, string>> = {
+    en: { E: 'Easy', M: 'Medium', H: 'Hard' },
+    es: { E: 'Fácil', M: 'Media', H: 'Difícil' },
+  }
+  return map[lang][d] || d
+}
+
+export function getAssessmentLabel(assessment: string, lang: Lang = 'es'): string {
+  const map: Record<Lang, Record<string, string>> = {
+    en: {
+      SAT: 'SAT',
+      PSAT10: 'PSAT/NMSQT 10',
+      PSAT89: 'PSAT 8/9',
+    },
+    es: {
+      SAT: 'SAT',
+      PSAT10: 'PSAT/NMSQT 10',
+      PSAT89: 'PSAT 8/9',
+    },
+  }
+  return map[lang][assessment] || assessment
+}
+
+export function getDomainLabel(domain: string, lang: Lang = 'es'): string {
+  const map: Record<Lang, Record<string, string>> = {
+    en: {
+      'Algebra': 'Algebra',
+      'Advanced Math': 'Advanced Math',
+      'Problem-Solving and Data Analysis': 'Problem-Solving & Data Analysis',
+      'Geometry and Trigonometry': 'Geometry & Trigonometry',
+    },
+    es: {
+      'Algebra': 'Álgebra',
+      'Advanced Math': 'Matemáticas Avanzadas',
+      'Problem-Solving and Data Analysis': 'Resolución de Problemas y Análisis de Datos',
+      'Geometry and Trigonometry': 'Geometría y Trigonometría',
+    },
+  }
+  return map[lang][domain] || domain
 }
 
 export function getDifficultyColor(d: string): string {

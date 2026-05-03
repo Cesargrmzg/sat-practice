@@ -3,9 +3,8 @@
 import { useState, useEffect } from 'react'
 import { getSimulationResults, clearSimulationResults } from '@/lib/storage'
 import { SimulationResult } from '@/lib/types'
-import { ASSESSMENT_LABELS, DIFFICULTY_LABELS } from '@/lib/types'
 import { useI18n } from '@/lib/i18n'
-import { getDifficultyLabel, getDifficultyColor } from '@/lib/questions'
+import { getAssessmentLabel, getDifficultyLabel, getDifficultyColor, getDomainLabel } from '@/lib/questions'
 
 const ADMIN_PASSWORD = 'admin123'
 const AUTH_KEY = 'sat-history-auth'
@@ -128,7 +127,7 @@ export default function HistoryPage() {
           }`} style={{ letterSpacing: '-3px' }}>
             {r.percentage}%
           </div>
-          <div className="flex justify-center gap-8 text-sm mt-4">
+          <div className="flex flex-wrap justify-center gap-6 text-sm mt-4">
             <div>
               <div className="text-2xl font-semibold text-green-600">{r.correct}</div>
               <div className="text-gray-400">{t.correctLabel()}</div>
@@ -155,8 +154,8 @@ export default function HistoryPage() {
           <h3 className="font-semibold mb-4">{t.byDomain()}</h3>
           <div className="space-y-3">
             {Object.entries(byDomain).map(([d, stats]) => (
-              <div key={d} className="flex items-center justify-between">
-                <span className="text-sm">{d}</span>
+              <div key={d} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-sm">{getDomainLabel(d, lang)}</span>
                 <div className="flex items-center gap-3">
                   <div className="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div className="h-full bg-black rounded-full" style={{ width: `${(stats.correct / stats.total) * 100}%` }} />
@@ -173,8 +172,8 @@ export default function HistoryPage() {
           <h3 className="font-semibold mb-4">{t.byDifficulty()}</h3>
           <div className="space-y-3">
             {Object.entries(byDiff).map(([diff, stats]) => (
-              <div key={diff} className="flex items-center justify-between">
-                <span className={`badge ${getDifficultyColor(diff)}`}>{getDifficultyLabel(diff)}</span>
+              <div key={diff} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <span className={`badge ${getDifficultyColor(diff)}`}>{getDifficultyLabel(diff, lang)}</span>
                 <div className="flex items-center gap-3">
                   <div className="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div className="h-full bg-black rounded-full" style={{ width: `${(stats.correct / stats.total) * 100}%` }} />
@@ -189,7 +188,7 @@ export default function HistoryPage() {
         {/* Per-question breakdown */}
         <div className="card p-6 mb-6">
           <h3 className="font-semibold mb-4">{lang === 'es' ? 'Por pregunta' : 'By question'}</h3>
-          <div className="grid grid-cols-10 gap-2">
+          <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
             {r.questions.map((q, i) => (
               <div
                 key={i}
@@ -254,7 +253,7 @@ export default function HistoryPage() {
 
             return (
               <div key={r.id} className="card p-6 cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedResult(r)}>
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex items-start justify-between gap-4 mb-4">
                   <div>
                     <div className="text-lg font-semibold mb-1">{r.name}</div>
                     <div className="text-sm text-gray-400">{dateStr}</div>
@@ -268,10 +267,10 @@ export default function HistoryPage() {
 
                 <div className="flex flex-wrap gap-2 mb-4">
                   <span className="badge badge-blue">
-                    {ASSESSMENT_LABELS[r.assessment] || r.assessment}
+                    {getAssessmentLabel(r.assessment, lang)}
                   </span>
                   <span className="badge badge-gray">
-                    {DIFFICULTY_LABELS[r.difficulty] || r.difficulty}
+                    {getDifficultyLabel(r.difficulty, lang)}
                   </span>
                   <span className="badge badge-gray">
                     {minutes}:{seconds.toString().padStart(2, '0')}

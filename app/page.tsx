@@ -163,7 +163,7 @@ export default function HomePage() {
       </div>
 
       {/* Footer info */}
-      <div className="mt-8 flex gap-6 text-xs text-gray-400">
+      <div className="mt-8 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-gray-400">
         <span>{t.satCount({ count: '1,294' })}</span>
         <span>{t.psat10Count({ count: '1,222' })}</span>
         <span>{t.psat89Count({ count: '1,075' })}</span>
@@ -171,8 +171,8 @@ export default function HomePage() {
 
       {/* Spanish disclaimer */}
       {lang === 'es' && (
-        <div className="mt-4 text-[11px] text-orange-500/70 text-center max-w-md">
-          ⚠ {t.langDisclaimer()}
+        <div className="mt-4 max-w-lg rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 text-center">
+          {t.langDisclaimer()}
         </div>
       )}
 

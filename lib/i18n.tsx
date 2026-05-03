@@ -30,7 +30,11 @@ const translations = {
     psat10Count: '{count} PSAT/NMSQT 10',
     psat89Count: '{count} PSAT 8/9',
     language: 'Language',
-    langDisclaimer: 'Unofficial machine translation. Math content remains in English.',
+    practiceNav: 'Practice',
+    simulationNav: 'Simulation',
+    historyNav: 'History',
+    langDisclaimer: 'Spanish UI is available, but question translations are under review. Questions remain in English for now.',
+    questionLanguageNotice: 'Questions are shown in English while the Spanish bank is being reviewed.',
 
     // Free mode
     freeModeTitle: 'Practice Mode',
@@ -109,7 +113,11 @@ const translations = {
     psat10Count: '{count} PSAT/NMSQT 10',
     psat89Count: '{count} PSAT 8/9',
     language: 'Idioma',
-    langDisclaimer: 'Traducción automática no oficial. El contenido matemático permanece en inglés.',
+    practiceNav: 'Práctica',
+    simulationNav: 'Simulación',
+    historyNav: 'Historial',
+    langDisclaimer: 'La interfaz está en español, pero las traducciones de preguntas están en revisión. Por ahora, las preguntas se muestran en inglés.',
+    questionLanguageNotice: 'Las preguntas se muestran en inglés mientras se revisa el banco en español.',
 
     // Free mode
     freeModeTitle: 'Modo Práctica',

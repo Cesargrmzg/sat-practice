@@ -47,15 +47,15 @@ export default function QuestionCard({
   return (
     <div className="card p-6 md:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <span className="text-sm font-mono text-gray-400">
             {mode === 'simulation' && totalQuestions
               ? `${questionNumber} / ${totalQuestions}`
               : `#${questionNumber}`}
           </span>
-          <span className={`badge ${getDifficultyColor(question.difficulty)}`}>
-            {getDifficultyLabel(question.difficulty)}
+            <span className={`badge ${getDifficultyColor(question.difficulty)}`}>
+             {getDifficultyLabel(question.difficulty, lang)}
           </span>
           <span className="badge badge-gray">
             {getDomainShort(question.domain)}
@@ -66,7 +66,7 @@ export default function QuestionCard({
             </span>
           )}
         </div>
-        <span className="text-xs text-gray-400 uppercase font-mono">
+        <span className="text-xs text-gray-400 uppercase font-mono self-start sm:self-auto">
           {isMCQ ? t.multipleChoice() : t.shortAnswer()}
         </span>
       </div>

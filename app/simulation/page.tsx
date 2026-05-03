@@ -3,7 +3,7 @@
 import { Suspense } from 'react'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { loadQuestions, filterQuestions, selectWeightedQuestions, getDifficultyLabel, getDifficultyColor } from '@/lib/questions'
+import { loadQuestions, filterQuestions, selectWeightedQuestions, getDifficultyLabel, getDifficultyColor, getDomainLabel } from '@/lib/questions'
 import { saveSimulationResult, generateId } from '@/lib/storage'
 import { Question, Difficulty, SimulationQuestion, SimulationResult } from '@/lib/types'
 import QuestionCard from '@/components/QuestionCard'
@@ -246,6 +246,12 @@ function SimulationContent() {
           {t.simSubtitle({ count: TOTAL_QUESTIONS })}
         </p>
 
+        {lang === 'es' && (
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            {t.questionLanguageNotice()}
+          </div>
+        )}
+
         {/* Restore session prompt */}
         {hasSavedSession && (
           <div className="card p-6 mb-4 border-2 border-amber-300 bg-amber-50">
@@ -309,11 +315,11 @@ function SimulationContent() {
       <div>
         {/* Progress */}
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex flex-col gap-2 mb-2 sm:flex-row sm:items-center sm:justify-between">
             <a href="/" className="text-sm text-gray-400 hover:text-black transition-colors">
               ← {t.cancel()}
             </a>
-            <span className="text-sm text-gray-500 flex items-center gap-2">
+            <span className="text-sm text-gray-500 flex flex-wrap items-center gap-2 sm:justify-end">
               {t.questionOf({ name: playerName, current: currentIndex + 1, total: TOTAL_QUESTIONS })}
               <span className="font-mono text-amber-600 bg-amber-50 px-2 py-0.5 rounded">
                 {formatTime(timeElapsed)}
@@ -327,6 +333,12 @@ function SimulationContent() {
             />
           </div>
         </div>
+
+        {lang === 'es' && (
+          <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            {t.questionLanguageNotice()}
+          </div>
+        )}
 
         <QuestionCard
           question={currentQuestion}
@@ -386,7 +398,7 @@ function SimulationContent() {
           <div className={`text-xl font-medium mb-4 ${grade.color}`}>
             {grade.label}
           </div>
-          <div className="flex justify-center gap-8 text-sm">
+          <div className="flex flex-wrap justify-center gap-6 text-sm">
             <div>
               <div className="text-2xl font-semibold text-green-600">{correct}</div>
               <div className="text-gray-400">{t.correctLabel()}</div>
@@ -411,8 +423,8 @@ function SimulationContent() {
           <h3 className="font-semibold mb-4">{t.byDomain()}</h3>
           <div className="space-y-3">
             {Object.entries(byDomain).map(([d, stats]) => (
-              <div key={d} className="flex items-center justify-between">
-                <span className="text-sm">{d}</span>
+              <div key={d} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-sm">{getDomainLabel(d, lang)}</span>
                 <div className="flex items-center gap-3">
                   <div className="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div
@@ -434,9 +446,9 @@ function SimulationContent() {
           <h3 className="font-semibold mb-4">{t.byDifficulty()}</h3>
           <div className="space-y-3">
             {Object.entries(byDiff).map(([diff, stats]) => (
-              <div key={diff} className="flex items-center justify-between">
+              <div key={diff} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <span className={`badge ${getDifficultyColor(diff)}`}>
-                  {getDifficultyLabel(diff)}
+                  {getDifficultyLabel(diff, lang)}
                 </span>
                 <div className="flex items-center gap-3">
                   <div className="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -455,7 +467,7 @@ function SimulationContent() {
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <a href="/simulation" className="btn-primary">
             {t.newSim()}
           </a>

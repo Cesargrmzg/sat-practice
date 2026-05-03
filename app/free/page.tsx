@@ -86,7 +86,7 @@ function FreeContent() {
   return (
     <div>
       {/* Stats bar */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <a href="/" className="text-sm text-gray-400 hover:text-black transition-colors">
             ← {t.back()}
@@ -95,7 +95,7 @@ function FreeContent() {
             {t.freeModeTitle()}
           </h1>
         </div>
-        <div className="flex items-center gap-4 text-sm">
+        <div className="flex flex-wrap items-center gap-4 text-sm">
           <span className="text-gray-500">
             {t.answered()}: <span className="font-semibold text-black">{questionCount}</span>
           </span>
@@ -111,6 +111,12 @@ function FreeContent() {
           )}
         </div>
       </div>
+
+      {lang === 'es' && (
+        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          {t.questionLanguageNotice()}
+        </div>
+      )}
 
       {/* Question */}
       {current && (

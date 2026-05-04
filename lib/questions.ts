@@ -4,7 +4,7 @@ export type Lang = 'en' | 'es'
 
 const ENGLISH_QUESTION_FILE = '/data/questions.json'
 const SPANISH_QUESTION_FILE = '/data/questions.es.json'
-const SPANISH_QUESTION_BANK_ENABLED = false
+const SPANISH_QUESTION_BANK_ENABLED = true
 const BROKEN_TRANSLATION_PATTERN = /\[\[\[[A-Z0-9_.-]+\]\]\]/i
 
 const cachedQuestions: Partial<Record<Lang, Question[]>> = {}
@@ -66,22 +66,6 @@ function normalizeQuestion(question: Question): Question {
   }
 }
 
-function mergeQuestion(base: Question, overlay: Partial<Question>): Question {
-  return {
-    ...base,
-    ...overlay,
-    stem: normalizeMathMarkup(overlay.stem ?? base.stem),
-    rationale: normalizeMathMarkup(overlay.rationale ?? base.rationale),
-    skill_desc: overlay.skill_desc ?? base.skill_desc,
-    answer_options: overlay.answer_options
-      ? overlay.answer_options.map(opt => ({
-          ...opt,
-          content: normalizeMathMarkup(opt.content),
-        }))
-      : base.answer_options,
-  }
-}
-
 async function fetchQuestions(lang: Lang): Promise<Question[]> {
   const file = lang === 'es' ? SPANISH_QUESTION_FILE : ENGLISH_QUESTION_FILE
   const res = await fetch(file)
@@ -92,10 +76,9 @@ async function fetchQuestions(lang: Lang): Promise<Question[]> {
 export async function loadQuestions(lang: Lang = 'en'): Promise<Question[]> {
   if (cachedQuestions[lang]) return cachedQuestions[lang]!
 
-  const english = cachedQuestions.en ?? (await fetchQuestions('en')).map(normalizeQuestion)
-  cachedQuestions.en = english
-
   if (lang !== 'es' || !SPANISH_QUESTION_BANK_ENABLED) {
+    const english = cachedQuestions.en ?? (await fetchQuestions('en')).map(normalizeQuestion)
+    cachedQuestions.en = english
     cachedQuestions[lang] = english
     return english
   }
@@ -107,15 +90,11 @@ export async function loadQuestions(lang: Lang = 'en'): Promise<Question[]> {
       throw new Error('Spanish question bank failed validation')
     }
 
-    const spanishById = new Map(spanish.map(q => [q.external_id, q]))
-    const merged = english.map(base => {
-      const overlay = spanishById.get(base.external_id)
-      return overlay ? mergeQuestion(base, overlay) : base
-    })
-
-    cachedQuestions.es = merged
-    return merged
+    cachedQuestions.es = spanish
+    return spanish
   } catch {
+    const english = cachedQuestions.en ?? (await fetchQuestions('en')).map(normalizeQuestion)
+    cachedQuestions.en = english
     cachedQuestions.es = english
     return english
   }

@@ -33,8 +33,8 @@ const translations = {
     practiceNav: 'Practice',
     simulationNav: 'Simulation',
     historyNav: 'History',
-    langDisclaimer: 'Spanish UI is available, but question translations are under review. Questions remain in English for now.',
-    questionLanguageNotice: 'Questions are shown in English while the Spanish bank is being reviewed.',
+    langDisclaimer: 'Spanish translations are machine-assisted and have been QA-reviewed. Math notation and official wording may still differ from the original.',
+    questionLanguageNotice: 'Questions are shown in Spanish, while math notation and some labels remain in their original form.',
 
     // Free mode
     freeModeTitle: 'Practice Mode',
@@ -116,8 +116,8 @@ const translations = {
     practiceNav: 'Práctica',
     simulationNav: 'Simulación',
     historyNav: 'Historial',
-    langDisclaimer: 'La interfaz está en español, pero las traducciones de preguntas están en revisión. Por ahora, las preguntas se muestran en inglés.',
-    questionLanguageNotice: 'Las preguntas se muestran en inglés mientras se revisa el banco en español.',
+    langDisclaimer: 'Las traducciones al español son asistidas por máquina y revisadas con QA. La notación matemática y algunos términos oficiales pueden seguir la forma original.',
+    questionLanguageNotice: 'Las preguntas se muestran en español, mientras que la notación matemática y algunas etiquetas se mantienen en su forma original.',
 
     // Free mode
     freeModeTitle: 'Modo Práctica',
